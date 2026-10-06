@@ -99,28 +99,32 @@ export const CustomerAuthModal: React.FC<CustomerAuthModalProps> = ({
       ? phoneInput.trim()
       : `+91 ${phoneInput.trim()}`;
 
-    const newCustomer = db.registerCustomer({
-      name: regName.trim(),
-      phone: formattedPhone,
-      email: regEmail.trim() || `${regName.toLowerCase().replace(/\s+/g, '')}.demo@zuno.example`,
-      locality: regLocality,
-      apartmentName: regApartment.trim() || 'ZUNO Residency',
-      block: regBlock.trim() || 'Block A',
-      flat: regFlat.trim() || '101',
-      preferredLanguage: 'English / Tamil',
-      preferences: {
-        dietary: 'South Indian homestyle',
-        elderFriendly: true,
-        kidsFriendly: true,
-      },
-    });
+    try {
+      const newCustomer = db.registerCustomer({
+        name: regName.trim(),
+        phone: formattedPhone,
+        email: regEmail.trim() || `${regName.toLowerCase().replace(/\s+/g, '')}.demo@zuno.example`,
+        locality: regLocality,
+        apartmentName: regApartment.trim() || 'ZUNO Residency',
+        block: regBlock.trim() || 'Block A',
+        flat: regFlat.trim() || '101',
+        preferredLanguage: 'English / Tamil',
+        preferences: {
+          dietary: 'South Indian homestyle',
+          elderFriendly: true,
+          kidsFriendly: true,
+        },
+      });
 
-    if (onCustomerChange) onCustomerChange(newCustomer);
-    setSuccessMessage(`Account created successfully! Welcome to ZUNO, ${newCustomer.name}.`);
-    setTimeout(() => {
-      onClose();
-      setSuccessMessage(null);
-    }, 1200);
+      if (onCustomerChange) onCustomerChange(newCustomer);
+      setSuccessMessage(`Account created successfully! Welcome to ZUNO, ${newCustomer.name}.`);
+      setTimeout(() => {
+        onClose();
+        setSuccessMessage(null);
+      }, 1200);
+    } catch (err: any) {
+      setError(err?.message || 'Unable to create account. Please use Customer Sign In if this phone is already registered.');
+    }
   };
 
   return (

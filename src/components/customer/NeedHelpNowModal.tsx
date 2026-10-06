@@ -64,11 +64,9 @@ export const NeedHelpNowModal: React.FC<NeedHelpNowModalProps> = ({
   // Set default selected helper
   const topHelper = matchedHelpers[0]?.helper;
   const chosenHelper = useMemo(() => {
-    if (selectedHelperId) {
-      return helpers.find((h) => h.id === selectedHelperId);
-    }
-    return topHelper;
-  }, [selectedHelperId, topHelper, helpers]);
+    if (!selectedHelperId) return undefined;
+    return helpers.find((h) => h.id === selectedHelperId);
+  }, [selectedHelperId, helpers]);
 
   // Pricing with urgent premium based on chosen helper's rate
   const pricing = useMemo(

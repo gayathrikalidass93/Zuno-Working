@@ -167,8 +167,8 @@ export const BuildMyVisitModal: React.FC<BuildMyVisitModalProps> = ({
     if (!selectedHelperId) {
       return undefined;
     }
-    return helpers.find((h) => h.id === selectedHelperId);
-  }, [bookingMode, selectedHelperId, topHelper, helpers]);
+    return eligibleMatches.find((m) => m.helper.id === selectedHelperId)?.helper;
+  }, [bookingMode, selectedHelperId, topHelper, eligibleMatches]);
 
   // Selected helper's asking rate for the customer's selected tasks!
   const chosenHelperAskingRate = useMemo(() => {
@@ -227,7 +227,7 @@ export const BuildMyVisitModal: React.FC<BuildMyVisitModalProps> = ({
       return;
     }
 
-    const assignedHelper = helpers.find((h) => h.id === assignedHelperId);
+    const assignedHelper = eligibleMatches.find((m) => m.helper.id === assignedHelperId)?.helper;
     if (!assignedHelper) {
       return;
     }

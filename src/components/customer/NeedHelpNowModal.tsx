@@ -87,7 +87,7 @@ export const NeedHelpNowModal: React.FC<NeedHelpNowModalProps> = ({
   if (!isOpen) return null;
 
   const handleConfirm = () => {
-    const helperId = selectedHelperId || topHelper?.id;
+    const helperId = selectedHelperId;
     if (!helperId) return;
 
     onConfirmUrgentBooking({

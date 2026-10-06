@@ -188,6 +188,50 @@ export const db = {
     return state.customers.find((c) => c.id === id);
   },
 
+  registerCustomer(
+    data: Omit<Customer, 'id' | 'createdAt' | 'favouriteHelperIds'> & { favouriteHelperIds?: string[] }
+  ): Customer {
+    // Check if customer with same phone exists
+    const cleanDigits = data.phone.replace(/\D/g, '');
+    const existing = state.customers.find((c) => {
+      const cDigits = c.phone.replace(/\D/g, '');
+      return cDigits.endsWith(cleanDigits) || cleanDigits.endsWith(cDigits);
+    });
+
+    if (existing) {
+      // Update existing customer profile
+      existing.name = data.name;
+      existing.locality = data.locality;
+      existing.apartmentName = data.apartmentName;
+      existing.block = data.block;
+      existing.flat = data.flat;
+      if (data.email) existing.email = data.email;
+      state.activeCustomerId = existing.id;
+      saveState();
+      return existing;
+    }
+
+    const newCustomer: Customer = {
+      ...data,
+      id: `cust_${Date.now()}`,
+      favouriteHelperIds: data.favouriteHelperIds || [],
+      createdAt: new Date().toISOString(),
+    };
+
+    state.customers.push(newCustomer);
+    state.activeCustomerId = newCustomer.id;
+
+    db.logAudit({
+      bookingId: 'AUTH',
+      event: `New customer registered: ${newCustomer.name} (${newCustomer.locality})`,
+      actor: 'customer',
+      actorName: newCustomer.name,
+    });
+
+    saveState();
+    return newCustomer;
+  },
+
   toggleFavouriteHelper(customerId: string, helperId: string): boolean {
     const cust = state.customers.find((c) => c.id === customerId);
     if (!cust) return false;

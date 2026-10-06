@@ -14,6 +14,7 @@ import { NeedHelpNowModal } from './components/customer/NeedHelpNowModal';
 import { ActiveBookingModal } from './components/customer/ActiveBookingModal';
 import { SupportTicketModal } from './components/customer/SupportTicketModal';
 import { PrivacyNoticeModal } from './components/common/PrivacyNoticeModal';
+import { CustomerAuthModal } from './components/common/CustomerAuthModal';
 import { HelperPortal } from './components/helper/HelperPortal';
 import { AdminControlTower } from './components/admin/AdminControlTower';
 import { DemoScenarioTour } from './components/demo/DemoScenarioTour';
@@ -33,6 +34,7 @@ export default function App() {
 
   const [isNeedHelpNowOpen, setIsNeedHelpNowOpen] = useState(false);
   const [isPrivacyNoticeOpen, setIsPrivacyNoticeOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [activeBookingModalId, setActiveBookingModalId] = useState<string | null>(null);
   const [supportModalBookingId, setSupportModalBookingId] = useState<string | null>(null);
 
@@ -95,6 +97,7 @@ export default function App() {
         activeHelper={activeHelper}
         onResetDemo={() => db.resetToDemoData()}
         onOpenPrivacy={() => setIsPrivacyNoticeOpen(true)}
+        onOpenAuth={() => setIsAuthModalOpen(true)}
       />
 
       {/* 2. Main Role Content */}
@@ -109,6 +112,7 @@ export default function App() {
             onBookAgain={handleBookAgain}
             onViewBookingDetails={(id) => setActiveBookingModalId(id)}
             onToggleFavourite={handleToggleFavourite}
+            onOpenAuth={() => setIsAuthModalOpen(true)}
           />
         )}
 
@@ -226,6 +230,14 @@ export default function App() {
         isOpen={isPrivacyNoticeOpen}
         onClose={() => setIsPrivacyNoticeOpen(false)}
         customer={activeCustomer}
+      />
+
+      {/* F. Customer Account Registration & Phone Sign-in */}
+      <CustomerAuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        activeCustomer={activeCustomer}
+        onCustomerChange={(newCust) => db.setActiveCustomerId(newCust.id)}
       />
 
       {/* Clean quiet footer */}

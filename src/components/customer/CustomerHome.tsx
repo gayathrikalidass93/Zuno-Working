@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Customer, Helper, Booking, ServiceCategory, Task } from '../../types';
 import { SERVICE_CATEGORIES, MASTER_TASKS } from '../../data/services';
 import { getHelperWorkRatesBreakdown } from '../../services/helperRates';
+import { maskPhoneNumber } from '../../services/privacy';
 import {
   Sparkles,
   Zap,
@@ -24,6 +25,11 @@ import {
   CheckSquare,
   Square,
   Info,
+  User,
+  LogOut,
+  Building,
+  Phone,
+  Mail,
 } from 'lucide-react';
 
 interface CustomerHomeProps {
@@ -35,6 +41,7 @@ interface CustomerHomeProps {
   onBookAgain: (previousBooking: Booking) => void;
   onViewBookingDetails: (bookingId: string) => void;
   onToggleFavourite: (helperId: string) => void;
+  onOpenAuth?: () => void;
 }
 
 export const CustomerHome: React.FC<CustomerHomeProps> = ({
@@ -46,9 +53,10 @@ export const CustomerHome: React.FC<CustomerHomeProps> = ({
   onBookAgain,
   onViewBookingDetails,
   onToggleFavourite,
+  onOpenAuth,
 }) => {
-  // Main tabs: 'services' (Only available services to choose easily) | 'bookings' (All active & past visits) | 'helpers' (Saved favourite helpers)
-  const [activeTab, setActiveTab] = useState<'services' | 'bookings' | 'helpers'>('services');
+  // Main tabs: 'services' | 'bookings' | 'helpers' | 'profile'
+  const [activeTab, setActiveTab] = useState<'services' | 'bookings' | 'helpers' | 'profile'>('services');
 
   // Filter in Services tab
   const [selectedServiceCategory, setSelectedServiceCategory] = useState<string>('all');
@@ -60,22 +68,24 @@ export const CustomerHome: React.FC<CustomerHomeProps> = ({
   // Filter in Bookings tab
   const [bookingFilter, setBookingFilter] = useState<'all' | 'active' | 'completed' | 'cancelled'>('all');
 
-  // Active bookings (in progress or pending action)
+  // Active bookings (in progress or pending action) for THIS customer
   const activeBookings = bookings.filter((b) =>
+    b.customerId === customer.id &&
     ['requested', 'confirmed', 'helper_assigned', 'on_the_way', 'started', 'replacement_required'].includes(
       b.status
     )
   );
-  const completedBookings = bookings.filter((b) => b.status === 'completed');
-  const cancelledBookings = bookings.filter((b) => b.status === 'cancelled');
+  const completedBookings = bookings.filter((b) => b.customerId === customer.id && b.status === 'completed');
+  const cancelledBookings = bookings.filter((b) => b.customerId === customer.id && b.status === 'cancelled');
 
-  // Filtered bookings list for the Bookings tab
+  // Filtered bookings list for the Bookings tab (Strict customer isolation!)
   const filteredBookings = useMemo(() => {
+    const userBookings = bookings.filter((b) => b.customerId === customer.id);
     if (bookingFilter === 'active') return activeBookings;
     if (bookingFilter === 'completed') return completedBookings;
     if (bookingFilter === 'cancelled') return cancelledBookings;
-    return bookings;
-  }, [bookings, bookingFilter, activeBookings, completedBookings, cancelledBookings]);
+    return userBookings;
+  }, [bookings, customer.id, bookingFilter, activeBookings, completedBookings, cancelledBookings]);
 
   // Customer's favourite helpers
   const favouriteHelpers = helpers.filter((h) => customer.favouriteHelperIds.includes(h.id));
@@ -204,6 +214,19 @@ export const CustomerHome: React.FC<CustomerHomeProps> = ({
               ({favouriteHelpers.length})
             </span>
           )}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('profile')}
+          className={`flex-1 py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+            activeTab === 'profile'
+              ? 'bg-white text-orange-600 shadow-sm'
+              : 'text-stone-600 hover:text-stone-900'
+          }`}
+        >
+          <User className="w-4 h-4" />
+          <span>Profile</span>
         </button>
       </div>
 
@@ -783,6 +806,92 @@ export const CustomerHome: React.FC<CustomerHomeProps> = ({
               })}
             </div>
           )}
+        </div>
+      )}
+
+      {/* ============================================================== */}
+      {/* TAB 4: CUSTOMER ACCOUNT PROFILE & ORDERS STATS               */}
+      {/* ============================================================== */}
+      {activeTab === 'profile' && (
+        <div className="space-y-4">
+          <div className="p-5 rounded-3xl bg-gradient-to-br from-stone-900 to-stone-800 text-white shadow-md space-y-4">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-3.5">
+                <div className="w-14 h-14 rounded-2xl bg-orange-600 text-white font-extrabold flex items-center justify-center text-xl font-display shadow-inner">
+                  {customer.name.split(' ')[0][0]}
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold font-display">{customer.name}</h2>
+                  <div className="text-xs text-stone-300 font-mono mt-0.5">
+                    {maskPhoneNumber(customer.phone)}
+                  </div>
+                  <div className="text-[11px] text-orange-300 mt-0.5">
+                    {customer.email}
+                  </div>
+                </div>
+              </div>
+
+              {onOpenAuth && (
+                <button
+                  onClick={onOpenAuth}
+                  className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs flex items-center gap-1.5 transition-colors border border-white/10"
+                >
+                  <User className="w-3.5 h-3.5" />
+                  <span>Switch / Sign In</span>
+                </button>
+              )}
+            </div>
+
+            {/* Address Card */}
+            <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-1 text-xs">
+              <div className="text-[10px] uppercase font-bold text-stone-400 tracking-wider">
+                Saved Home Address:
+              </div>
+              <div className="font-semibold text-white">
+                {customer.flat}, {customer.block}, {customer.apartmentName}
+              </div>
+              <div className="text-stone-300 text-[11px]">
+                {customer.locality}, Chennai
+              </div>
+            </div>
+
+            {/* Quick Account Stats */}
+            <div className="grid grid-cols-3 gap-2 text-center text-xs">
+              <div className="p-2.5 rounded-xl bg-white/5 border border-white/10">
+                <div className="text-lg font-black font-mono text-orange-400">{filteredBookings.length}</div>
+                <div className="text-[10px] text-stone-400">Total Visits</div>
+              </div>
+              <div className="p-2.5 rounded-xl bg-white/5 border border-white/10">
+                <div className="text-lg font-black font-mono text-emerald-400">{completedBookings.length}</div>
+                <div className="text-[10px] text-stone-400">Completed</div>
+              </div>
+              <div className="p-2.5 rounded-xl bg-white/5 border border-white/10">
+                <div className="text-lg font-black font-mono text-amber-400">{favouriteHelpers.length}</div>
+                <div className="text-[10px] text-stone-400">Favourite Helpers</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Actions */}
+          <div className="p-4 rounded-3xl bg-white border border-stone-200 shadow-xs space-y-3 text-xs">
+            <div className="font-bold text-stone-900">Household Preferences</div>
+            <div className="p-3 rounded-2xl bg-stone-50 border border-stone-200 text-stone-700 leading-relaxed">
+              <span className="font-semibold text-stone-900">Dietary & Cooking: </span>
+              {customer.preferences.dietary || 'Standard homestyle'}
+            </div>
+            <div className="flex flex-wrap gap-2 text-[11px]">
+              {customer.preferences.elderFriendly && (
+                <span className="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-800 font-semibold border border-rose-100">
+                  👵 Elder Friendly
+                </span>
+              )}
+              {customer.preferences.kidsFriendly && (
+                <span className="px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 font-semibold border border-amber-100">
+                  👶 Child Friendly
+                </span>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>

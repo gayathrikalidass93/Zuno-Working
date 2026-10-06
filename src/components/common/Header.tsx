@@ -10,6 +10,7 @@ interface HeaderProps {
   activeHelper: Helper;
   onResetDemo: () => void;
   onOpenPrivacy?: () => void;
+  onOpenAuth?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -19,6 +20,7 @@ export const Header: React.FC<HeaderProps> = ({
   activeHelper,
   onResetDemo,
   onOpenPrivacy,
+  onOpenAuth,
 }) => {
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-stone-200">
@@ -110,6 +112,20 @@ export const Header: React.FC<HeaderProps> = ({
             <Compass className="w-3.5 h-3.5" />
             <span>Interactive Demo</span>
           </button>
+
+          {/* Customer Account / Login Switcher */}
+          {onOpenAuth && (
+            <button
+              onClick={onOpenAuth}
+              title={`Logged in as ${activeCustomer.name} (${activeCustomer.phone}). Click to switch or register.`}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold text-stone-800 bg-orange-50 border border-orange-200 hover:bg-orange-100 transition-colors shadow-2xs"
+            >
+              <span className="w-5 h-5 rounded-full bg-orange-600 text-white flex items-center justify-center text-[10px] font-black">
+                {activeCustomer.name.split(' ')[0][0]}
+              </span>
+              <span className="hidden md:inline">{activeCustomer.name.split(' ')[0]}</span>
+            </button>
+          )}
 
           {/* Privacy controls toggle */}
           {onOpenPrivacy && (

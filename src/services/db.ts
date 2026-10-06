@@ -99,6 +99,13 @@ function loadState(): MarketplaceState {
         });
         parsed.privacyConsents = parsed.privacyConsents || INITIAL_PRIVACY_CONSENTS;
         parsed.privacyRequests = parsed.privacyRequests || INITIAL_PRIVACY_REQUESTS;
+        // Migrate legacy demo-session state so a clean launch never masquerades as Kartik/Lakshmi.
+        if (!parsed.activeCustomerId || parsed.activeCustomerId === 'cust_kartik') {
+          parsed.activeCustomerId = '';
+        }
+        if (!parsed.activeHelperId || parsed.activeHelperId === 'hlp_lakshmi') {
+          parsed.activeHelperId = '';
+        }
         return parsed;
       }
     }

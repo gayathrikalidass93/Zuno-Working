@@ -41,6 +41,13 @@ export default function App() {
   const activeCustomer = db.getActiveCustomer();
   const activeHelper = db.getActiveHelper();
 
+  // A clean browser session must not silently impersonate the demo customer.
+  useEffect(() => {
+    if (!state.activeCustomerId) {
+      setIsAuthModalOpen(true);
+    }
+  }, [state.activeCustomerId]);
+
   // Active booking for the details modal
   const selectedBooking = state.bookings.find((b) => b.id === activeBookingModalId) || null;
   const selectedBookingHelper = selectedBooking

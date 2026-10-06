@@ -161,11 +161,14 @@ export const BuildMyVisitModal: React.FC<BuildMyVisitModalProps> = ({
 
   // Selected helper object
   const chosenHelper = useMemo(() => {
-    if (selectedHelperId) {
-      return helpers.find((h) => h.id === selectedHelperId);
+    if (bookingMode === 'let_zuno_choose') {
+      return topHelper;
     }
-    return topHelper || helpers[0];
-  }, [selectedHelperId, topHelper, helpers]);
+    if (!selectedHelperId) {
+      return undefined;
+    }
+    return helpers.find((h) => h.id === selectedHelperId);
+  }, [bookingMode, selectedHelperId, topHelper, helpers]);
 
   // Selected helper's asking rate for the customer's selected tasks!
   const chosenHelperAskingRate = useMemo(() => {
@@ -218,7 +221,16 @@ export const BuildMyVisitModal: React.FC<BuildMyVisitModalProps> = ({
 
   const handleFinalSubmit = () => {
     const assignedHelperId =
-      bookingMode === 'let_zuno_choose' ? topHelper?.id : selectedHelperId || topHelper?.id;
+      bookingMode === 'let_zuno_choose' ? topHelper?.id : selectedHelperId;
+
+    if (!assignedHelperId) {
+      return;
+    }
+
+    const assignedHelper = helpers.find((h) => h.id === assignedHelperId);
+    if (!assignedHelper) {
+      return;
+    }
 
     onConfirmBooking({
       customerId: customer.id,

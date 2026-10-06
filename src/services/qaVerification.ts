@@ -1,146 +1,207 @@
 /**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- * 
- * ZUNO QA Verification Test Suite
- * Tests:
- * 1. Registration (new phone creates account)
- * 2. No Duplicate on repeated registration
- * 3. Login by phone restores existing profile
- * 4. Booking creation preserves tasks & duration and belongs to customer
- * 5. Single Source of Truth: Customer, Helper, and Admin view the same booking
- * 6. Helper status transition synchronizes across views
- * 7. Privacy: Customer sees only helper name & public skills, not private PII
+ * ZUNO truth-mode QA verification.
+ *
+ * This suite deliberately uses a fresh synthetic customer and the real seeded
+ * Kavitha helper ID. It validates relationships by ID, not by display name.
+ *
+ * It is intentionally not a browser/E2E test: UI rendering and authentication
+ * widgets still require a real browser run.
  */
-
-import { db } from './services/db';
+import { db } from './db';
 
 export function runZunoQASuite(): { name: string; status: 'PASS' | 'FAIL'; details?: string }[] {
   const results: { name: string; status: 'PASS' | 'FAIL'; details?: string }[] = [];
 
+  const pass = (name: string, details: string) => results.push({ name, status: 'PASS', details });
+  const fail = (name: string, details: string) => results.push({ name, status: 'FAIL', details });
+
   try {
-    // TEST 1: First-time registration with synthetic data
-    const syntheticPhone = '+91 90000 00001';
-    const regResult = db.registerCustomer({
-      name: 'Ananya Demo',
-      phone: syntheticPhone,
-      email: 'ananya.demo@zuno.example',
+    const TEST_PHONE = '+91 90000 00002';
+    const TEST_EMAIL = 'customer.kavitha.flow@zuno.example';
+    const KAVITHA_ID = 'hlp_kavitha';
+
+    const before = db.getState();
+    if (before.customers.some((c) => c.phone.replace(/\D/g, '') === TEST_PHONE.replace(/\D/g, ''))) {
+      fail('1. Brand-new synthetic customer registration', 'Test phone already exists; refusing to reuse an existing customer.');
+      return results;
+    }
+
+    const customer = db.registerCustomer({
+      name: 'Test Customer Kavitha Flow',
+      phone: TEST_PHONE,
+      email: TEST_EMAIL,
       locality: 'Chromepet',
       apartmentName: 'ZUNO Residency',
-      block: 'Block A',
+      block: 'A',
       flat: '402',
       preferredLanguage: 'English / Tamil',
-      preferences: {
-        dietary: 'South Indian homestyle',
-        elderFriendly: true,
-        kidsFriendly: true,
-      },
+      preferences: { dietary: 'South Indian homestyle' },
     });
 
-    if (regResult && regResult.id && regResult.name === 'Ananya Demo') {
-      results.push({ name: '1. Registration (New Customer Account)', status: 'PASS', details: `Created ID: ${regResult.id}` });
-    } else {
-      results.push({ name: '1. Registration (New Customer Account)', status: 'FAIL', details: 'Failed to create customer' });
+    if (!customer.id || customer.id === 'cust_kartik' || customer.name !== 'Test Customer Kavitha Flow') {
+      fail('1. Brand-new synthetic customer registration', `Unexpected customer identity: ${customer.id} / ${customer.name}`);
+      return results;
     }
+    pass('1. Brand-new synthetic customer registration', `customerId=${customer.id}, profileId=${customer.id}, name=${customer.name}, phone=${customer.phone}`);
 
-    // TEST 2: Returning user login with same phone number loads exact same profile (No duplicate)
-    const initialCustomerId = regResult.id;
-    const secondReg = db.registerCustomer({
-      name: 'Ananya Demo',
-      phone: syntheticPhone,
-      email: 'ananya.demo@zuno.example',
-      locality: 'Chromepet',
-      apartmentName: 'ZUNO Residency',
-      block: 'Block A',
-      flat: '402',
-      preferredLanguage: 'English / Tamil',
-      preferences: {
-        dietary: 'South Indian homestyle',
-      },
-    });
-
-    if (secondReg.id === initialCustomerId) {
-      results.push({ name: '2. Returning Login (No Duplicate Customer)', status: 'PASS', details: `Reused ID: ${secondReg.id}` });
-    } else {
-      results.push({ name: '2. Returning Login (No Duplicate Customer)', status: 'FAIL', details: `Created duplicate: ${secondReg.id}` });
+    db.setActiveCustomerId(customer.id);
+    const loggedInCustomer = db.getActiveCustomer();
+    if (loggedInCustomer.id !== customer.id || loggedInCustomer.phone !== TEST_PHONE) {
+      fail('2. Customer session identity', `loggedInCustomerId=${loggedInCustomer.id}`);
+      return results;
     }
+    pass('2. Customer session identity', `loggedInCustomerId=${loggedInCustomer.id}`);
 
-    // TEST 3: Customer profile persistence & saved address
-    const activeCustomer = db.getActiveCustomer();
-    if (activeCustomer.id === initialCustomerId && activeCustomer.flat === '402' && activeCustomer.locality === 'Chromepet') {
-      results.push({ name: '3. Customer Profile Persistence', status: 'PASS', details: 'Active customer matches saved profile' });
-    } else {
-      results.push({ name: '3. Customer Profile Persistence', status: 'FAIL', details: 'Profile data mismatch' });
+    const kavitha = db.getHelper(KAVITHA_ID);
+    if (!kavitha || kavitha.id !== KAVITHA_ID || kavitha.name !== 'Kavitha Murugesan') {
+      fail('3. Actual Kavitha helper identity', 'hlp_kavitha was not found or does not resolve to Kavitha Murugesan.');
+      return results;
     }
+    pass('3. Actual Kavitha helper identity', `helperId=${kavitha.id}, helperName=${kavitha.name}`);
 
-    // TEST 4: Create booking without re-registering
     const booking = db.createBooking({
-      customerId: initialCustomerId,
-      helperId: 'hlp_priya',
+      customerId: customer.id,
+      helperId: kavitha.id,
       status: 'confirmed',
-      tasks: ['clean_kitchen', 'laundry_fold', 'org_wardrobe'],
+      tasks: ['clean_kitchen'],
       scheduledDate: '2026-10-12',
       scheduledSlot: '10:00 AM - 12:00 PM',
       durationHours: 2,
       estimatedWorkloadMinutes: 120,
       bookingMode: 'choose_helper',
       isUrgent: false,
-      locality: activeCustomer.locality,
-      apartmentName: activeCustomer.apartmentName,
-      block: activeCustomer.block,
-      flat: activeCustomer.flat,
-      customerNotes: 'Please ring bell upon arrival',
+      locality: 'Chromepet',
+      apartmentName: 'ZUNO Residency',
+      block: 'A',
+      flat: '402',
+      customerNotes: 'Kitchen cleaning',
       pricing: {
-        baseHourlyRate: 249,
+        baseHourlyRate: kavitha.hourlyRate || 249,
         durationHours: 2,
-        baseAmount: 498,
+        baseAmount: (kavitha.hourlyRate || 249) * 2,
         taskComplexityAdjustment: 0,
         urgentFee: 0,
         weekendFee: 0,
-        multiTaskDiscount: 50,
-        subtotal: 448,
-        zunoFee: 80,
-        helperPayout: 368,
-        totalAmount: 448,
+        multiTaskDiscount: 0,
+        subtotal: (kavitha.hourlyRate || 249) * 2,
+        zunoFee: 0,
+        helperPayout: (kavitha.hourlyPayout || 0) * 2,
+        totalAmount: (kavitha.hourlyRate || 249) * 2,
       },
     });
 
-    if (booking && booking.id && booking.bookingCode && booking.customerId === initialCustomerId) {
-      results.push({ name: '4. Create Booking & Order ID', status: 'PASS', details: `Created Code: ${booking.bookingCode}` });
+    if (
+      !booking.id ||
+      booking.customerId !== customer.id ||
+      booking.helperId !== kavitha.id ||
+      booking.locality !== 'Chromepet' ||
+      booking.apartmentName !== 'ZUNO Residency' ||
+      booking.block !== 'A' ||
+      booking.flat !== '402'
+    ) {
+      fail('4. Booking relationship integrity', `bookingId=${booking.id}, customerId=${booking.customerId}, helperId=${booking.helperId}`);
+      return results;
+    }
+    pass(
+      '4. Booking relationship integrity',
+      `bookingId=${booking.id}, customerId=${booking.customerId}, helperId=${booking.helperId}, task=${booking.tasks[0]}, date=${booking.scheduledDate}, slot=${booking.scheduledSlot}`
+    );
+
+    const customerView = db.getState().bookings.find((b) => b.id === booking.id && b.customerId === customer.id);
+    const customerViewHelper = customerView?.helperId
+      ? db.getHelper(customerView.helperId)
+      : undefined;
+    if (!customerView || customerViewHelper?.id !== KAVITHA_ID || customerViewHelper.name !== 'Kavitha Murugesan') {
+      fail('5. Customer resolves booking helper by ID', 'Customer booking did not resolve to hlp_kavitha.');
     } else {
-      results.push({ name: '4. Create Booking & Order ID', status: 'FAIL', details: 'Failed to create booking' });
+      pass('5. Customer resolves booking helper by ID', `bookingId=${customerView.id}, helperId=${customerViewHelper.id}, helperName=${customerViewHelper.name}`);
     }
 
-    // TEST 5: Shared Data Layer (Single Source of Truth)
-    const state = db.getState();
-    const customerBooking = state.bookings.find((b) => b.id === booking.id && b.customerId === initialCustomerId);
-    const helperBooking = state.bookings.find((b) => b.id === booking.id && b.helperId === 'hlp_priya');
-    const adminBooking = state.bookings.find((b) => b.id === booking.id);
-
-    if (customerBooking && helperBooking && adminBooking && customerBooking === helperBooking && helperBooking === adminBooking) {
-      results.push({ name: '5. Single Source of Truth (Synchronisation)', status: 'PASS', details: 'Customer, Helper, and Admin share exact reference' });
+    const customerBookingSerialized = JSON.stringify(customerView || {});
+    if (customerBookingSerialized.includes(kavitha.phone) || customerBookingSerialized.includes(kavitha.emergencyContact)) {
+      fail('6. Customer privacy boundary', 'Booking record exposed helper private phone/emergency contact.');
     } else {
-      results.push({ name: '5. Single Source of Truth (Synchronisation)', status: 'FAIL', details: 'Booking records are disjoint' });
+      pass('6. Customer privacy boundary', 'Booking stores helperId only; helper private phone/emergency contact are not copied into the booking.');
     }
 
-    // TEST 6: Helper Status Transition Synchronisation
-    db.updateBookingStatus(booking.id, 'started', { actor: 'helper', actorName: 'Priya' });
-    const updatedState = db.getState();
-    const updatedBooking = updatedState.bookings.find((b) => b.id === booking.id);
-    if (updatedBooking && updatedBooking.status === 'started') {
-      results.push({ name: '6. Booking Status Lifecycle Synchronisation', status: 'PASS', details: 'Status updated to started across all roles' });
+    // Simulate helper login using the real helper ID, without creating another booking.
+    db.setActiveHelperId(kavitha.id);
+    const loggedInHelper = db.getActiveHelper();
+    const helperBooking = db.getState().bookings.find((b) => b.id === booking.id && b.helperId === loggedInHelper.id);
+    if (loggedInHelper.id !== KAVITHA_ID || !helperBooking || helperBooking.id !== booking.id) {
+      fail('7. Helper session sees exact existing booking', `loggedInHelperId=${loggedInHelper.id}, booking=${helperBooking?.id || 'none'}`);
     } else {
-      results.push({ name: '6. Booking Status Lifecycle Synchronisation', status: 'FAIL', details: 'Status failed to update' });
+      pass('7. Helper session sees exact existing booking', `loggedInHelperId=${loggedInHelper.id}, bookingId=${helperBooking.id}, customerId=${helperBooking.customerId}`);
     }
 
-    // TEST 7: Privacy boundary check
-    const helperObj = db.getHelper('hlp_priya');
-    const isPhoneProtected = !helperObj?.phone || helperObj.phone !== ''; // Helper profile has phone internally, but UI masks it
-    results.push({ name: '7. Customer and Helper Privacy Protection', status: 'PASS', details: 'Data classification and masking enforced' });
+    // Accept/advance the existing booking; never create a replacement booking.
+    db.updateBookingStatus(booking.id, 'helper_assigned', {
+      actor: 'helper',
+      actorName: loggedInHelper.name,
+    });
+    const accepted = db.getState().bookings.find((b) => b.id === booking.id);
+    if (!accepted || accepted.id !== booking.id || accepted.helperId !== KAVITHA_ID || accepted.customerId !== customer.id) {
+      fail('8. Helper accepts existing booking without duplication', 'Existing booking relationship changed or booking identity changed.');
+    } else {
+      pass('8. Helper accepts existing booking without duplication', `same bookingId=${accepted.id}, status=${accepted.status}`);
+    }
 
+    // Regression: Kavitha -> On the way must preserve Kavitha's ID.
+    db.updateBookingStatus(booking.id, 'on_the_way', {
+      actor: 'helper',
+      actorName: loggedInHelper.name,
+    });
+    const onTheWay = db.getState().bookings.find((b) => b.id === booking.id);
+    const resolvedOnTheWayHelper = onTheWay?.helperId ? db.getHelper(onTheWay.helperId) : undefined;
+    if (
+      !onTheWay ||
+      onTheWay.helperId !== KAVITHA_ID ||
+      resolvedOnTheWayHelper?.id !== KAVITHA_ID ||
+      resolvedOnTheWayHelper.name !== 'Kavitha Murugesan'
+    ) {
+      fail('9. Kavitha -> On the way regression', `helperId=${onTheWay?.helperId || 'missing'}, resolvedHelper=${resolvedOnTheWayHelper?.name || 'missing'}`);
+    } else {
+      pass('9. Kavitha -> On the way regression', 'Status changed to on_the_way while preserving helperId=hlp_kavitha.');
+    }
+
+    // Customer session returns to the same booking.
+    db.setActiveCustomerId(customer.id);
+    const returnedCustomer = db.getActiveCustomer();
+    const returnedBooking = db.getState().bookings.find((b) => b.id === booking.id && b.customerId === returnedCustomer.id);
+    if (!returnedBooking || returnedBooking.helperId !== KAVITHA_ID || returnedBooking.status !== 'on_the_way') {
+      fail('10. Customer sees same booking after helper update', 'Customer did not see the exact booking/helper/status after helper action.');
+    } else {
+      pass('10. Customer sees same booking after helper update', `bookingId=${returnedBooking.id}, helperId=${returnedBooking.helperId}, status=${returnedBooking.status}`);
+    }
+
+    // Admin truth check: same booking, same customer, same helper.
+    const adminBooking = db.getState().bookings.find((b) => b.id === booking.id);
+    const adminCustomer = adminBooking ? db.getCustomer(adminBooking.customerId) : undefined;
+    const adminHelper = adminBooking?.helperId ? db.getHelper(adminBooking.helperId) : undefined;
+    if (
+      !adminBooking ||
+      adminBooking.id !== booking.id ||
+      adminBooking.customerId !== customer.id ||
+      adminBooking.helperId !== KAVITHA_ID ||
+      adminCustomer?.id !== customer.id ||
+      adminHelper?.id !== KAVITHA_ID
+    ) {
+      fail('11. Admin sees exact shared booking relationship', 'Admin-side ID resolution mismatch.');
+    } else {
+      pass('11. Admin sees exact shared booking relationship', `bookingId=${adminBooking.id}, customerId=${adminBooking.customerId}, helperId=${adminBooking.helperId}`);
+    }
+
+    // No second booking was created during helper acceptance/status transitions.
+    const sameCustomerBookings = db.getState().bookings.filter((b) => b.customerId === customer.id);
+    if (sameCustomerBookings.length !== 1 || sameCustomerBookings[0].id !== booking.id) {
+      fail('12. No duplicate booking across role changes', `customer has ${sameCustomerBookings.length} booking(s)`);
+    } else {
+      pass('12. No duplicate booking across role changes', `exactly one booking remains: ${booking.id}`);
+    }
+
+    return results;
   } catch (err: any) {
-    results.push({ name: 'Test Execution Exception', status: 'FAIL', details: err?.message || String(err) });
+    fail('QA execution exception', err?.message || String(err));
+    return results;
   }
-
-  return results;
 }

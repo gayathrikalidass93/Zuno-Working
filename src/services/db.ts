@@ -345,6 +345,22 @@ export const db = {
 
   // Booking Flow
   createBooking(bookingData: Omit<Booking, 'id' | 'bookingCode' | 'startOtp' | 'timestamps'>): Booking {
+    const customer = state.customers.find((c) => c.id === bookingData.customerId);
+    if (!customer) {
+      throw new Error('Cannot create booking without a valid customerId.');
+    }
+
+    if (bookingData.bookingMode === 'choose_helper' && !bookingData.helperId) {
+      throw new Error('Cannot create a chosen-helper booking without an explicit helperId.');
+    }
+
+    if (bookingData.helperId) {
+      const helper = state.helpers.find((h) => h.id === bookingData.helperId);
+      if (!helper) {
+        throw new Error('Cannot create booking: helperId does not resolve to an existing helper.');
+      }
+    }
+
     const count = state.bookings.length + 1;
     const bookingCode = `ZUNO-${2600 + count}`;
     const id = `bk_${Date.now()}`;

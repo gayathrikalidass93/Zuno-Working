@@ -117,8 +117,10 @@ function loadState(): MarketplaceState {
     supplyDemand: INITIAL_LOCALITY_SUPPLY_DEMAND,
     privacyConsents: INITIAL_PRIVACY_CONSENTS,
     privacyRequests: INITIAL_PRIVACY_REQUESTS,
-    activeCustomerId: 'cust_kartik',
-    activeHelperId: 'hlp_lakshmi',
+    // No authenticated customer/helper is active on a clean browser session.
+    // Demo identities are available only through an explicit demo reset/switch.
+    activeCustomerId: '',
+    activeHelperId: '',
   };
 }
 
@@ -156,8 +158,10 @@ export const db = {
       supportTickets: JSON.parse(JSON.stringify(INITIAL_SUPPORT_TICKETS)),
       auditLogs: JSON.parse(JSON.stringify(INITIAL_AUDIT_LOGS)),
       supplyDemand: JSON.parse(JSON.stringify(INITIAL_LOCALITY_SUPPLY_DEMAND)),
-      activeCustomerId: 'cust_kartik',
-      activeHelperId: 'hlp_lakshmi',
+      privacyConsents: JSON.parse(JSON.stringify(INITIAL_PRIVACY_CONSENTS)),
+      privacyRequests: JSON.parse(JSON.stringify(INITIAL_PRIVACY_REQUESTS)),
+      activeCustomerId: '',
+      activeHelperId: '',
     };
     saveState();
   },
@@ -175,12 +179,64 @@ export const db = {
 
   getActiveCustomer(): Customer {
     const cust = state.customers.find((c) => c.id === state.activeCustomerId);
-    return cust || state.customers[0];
+    if (cust) return cust;
+    return {
+      id: '',
+      name: 'Guest Customer',
+      phone: '',
+      email: '',
+      locality: '',
+      apartmentName: '',
+      block: '',
+      flat: '',
+      preferredLanguage: 'English',
+      preferences: { dietary: '' },
+      favouriteHelperIds: [],
+      createdAt: '',
+    };
   },
 
   getActiveHelper(): Helper {
     const hlp = state.helpers.find((h) => h.id === state.activeHelperId);
-    return hlp || state.helpers[0];
+    if (hlp) return hlp;
+    return {
+      id: '',
+      name: 'No helper signed in',
+      photoUrl: '',
+      phone: '',
+      gender: 'female',
+      age: 0,
+      locality: '',
+      serviceRadiusKm: 0,
+      preferredLocalities: [],
+      languages: [],
+      experienceYears: 0,
+      skills: [],
+      hourlyRate: 0,
+      hourlyPayout: 0,
+      availabilityStatus: 'off_duty',
+      workingDays: [],
+      preferredTime: '',
+      isActive: false,
+      verificationStatus: 'pending',
+      isChildcareVerified: false,
+      isElderAssistanceEligible: false,
+      rating: 0,
+      completedJobs: 0,
+      cancellationRate: 0,
+      onTimeRate: 0,
+      emergencyContact: '',
+      backgroundCheckStatus: 'pending',
+      verificationChecklist: {
+        idVerified: false,
+        addressReferenceVerified: false,
+        experienceVerified: false,
+        skillsAssessed: false,
+        childcareScreened: false,
+      },
+      apartmentsServed: [],
+      createdAt: '',
+    };
   },
 
   // Customer Management
@@ -199,16 +255,7 @@ export const db = {
     });
 
     if (existing) {
-      // Update existing customer profile
-      existing.name = data.name;
-      existing.locality = data.locality;
-      existing.apartmentName = data.apartmentName;
-      existing.block = data.block;
-      existing.flat = data.flat;
-      if (data.email) existing.email = data.email;
-      state.activeCustomerId = existing.id;
-      saveState();
-      return existing;
+      throw new Error('An account already exists for this phone number. Use Customer Sign In instead.');
     }
 
     const newCustomer: Customer = {

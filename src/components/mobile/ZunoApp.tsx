@@ -90,11 +90,11 @@ export const ZunoApp: React.FC = () => {
   const [durationHours, setDurationHours] = useState<number>(3);
   const [selectedDate, setSelectedDate] = useState<string>('Sat, 26 Apr 2025');
   const [selectedSlot, setSelectedSlot] = useState<string>('10:00 AM - 1:00 PM');
-  const [chosenHelperName, setChosenHelperName] = useState<string>('Lakshmi');
+  const [chosenHelperName, setChosenHelperName] = useState<string>('Selected helper');
 
   // Rating on completed screen
   const [userRating, setUserRating] = useState<number>(5);
-  const [isLakshmiFavourited, setIsLakshmiFavourited] = useState<boolean>(true);
+  const [isSelected helperFavourited, setIsSelected helperFavourited] = useState<boolean>(true);
 
   // Bonus balance state
   const [bonusBalance, setBonusBalance] = useState<number>(120);
@@ -120,7 +120,7 @@ export const ZunoApp: React.FC = () => {
   const selectedTasksList = ALL_TASKS.filter((task) => selectedTaskIds.includes(task.id));
 
   // Quick book again handler
-  const handleBookAgain = (helperName: string = 'Lakshmi') => {
+  const handleBookAgain = (helperName: string = 'Selected helper') => {
     setChosenHelperName(helperName);
     setSelectedTaskIds(['sweep', 'mop', 'vessels', 'veg_cut', 'lunch']);
     setDurationHours(3);
@@ -364,7 +364,7 @@ export const ZunoApp: React.FC = () => {
                     <div className="w-12 h-12 rounded-full overflow-hidden ring-2 ring-stone-100 shrink-0">
                       <img
                         src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=200&q=80"
-                        alt="Lakshmi"
+                        alt="Selected helper"
                         className="w-full h-full object-cover"
                         onError={(e) => {
                           (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80';
@@ -372,7 +372,7 @@ export const ZunoApp: React.FC = () => {
                       />
                     </div>
                     <div>
-                      <div className="font-bold text-sm text-stone-900">Lakshmi</div>
+                      <div className="font-bold text-sm text-stone-900">Selected helper</div>
                       <div className="text-[11px] text-stone-500 flex items-center gap-1">
                         <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
                         <span className="font-bold text-stone-700">4.9</span>
@@ -385,7 +385,7 @@ export const ZunoApp: React.FC = () => {
                   </div>
 
                   <button
-                    onClick={() => handleBookAgain('Lakshmi')}
+                    onClick={() => handleBookAgain('Selected helper')}
                     className="px-3.5 py-1.5 rounded-xl bg-orange-50 hover:bg-orange-100 text-[#FF5A36] border border-orange-200/60 font-bold text-xs active:scale-95 transition-all shrink-0"
                   >
                     {t.bookAgain}
@@ -639,7 +639,7 @@ export const ZunoApp: React.FC = () => {
                 </div>
               </div>
 
-              {/* Section 3: Recommended Helper (Lakshmi) */}
+              {/* Section 3: Recommended Helper (Selected helper) */}
               <div className="space-y-2 pt-1">
                 <div className="text-xs font-bold text-stone-900">
                   {t.recommendedHelper}
@@ -650,7 +650,7 @@ export const ZunoApp: React.FC = () => {
                     <div className="w-14 h-14 rounded-full overflow-hidden ring-2 ring-stone-100 shrink-0">
                       <img
                         src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=200&q=80"
-                        alt="Lakshmi"
+                        alt="Selected helper"
                         className="w-full h-full object-cover"
                         onError={(e) => {
                           (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80';
@@ -661,7 +661,7 @@ export const ZunoApp: React.FC = () => {
                     <div className="space-y-0.5">
                       <div className="flex items-center gap-2">
                         <span className="font-extrabold text-base text-stone-900 font-display">
-                          Lakshmi
+                          Selected helper
                         </span>
                         <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold flex items-center gap-0.5">
                           ✓ Verified
@@ -699,7 +699,7 @@ export const ZunoApp: React.FC = () => {
                   <div className="space-y-2 pt-1 border-t border-stone-100">
                     <button
                       onClick={() => {
-                        setChosenHelperName('Lakshmi');
+                        setChosenHelperName('Selected helper');
                         setCurrentScreen('checkout');
                       }}
                       className="w-full py-3.5 rounded-2xl bg-[#2E1437] hover:bg-[#3E1B4A] text-white font-extrabold text-xs shadow-md active:scale-95 transition-all text-center"
@@ -709,7 +709,7 @@ export const ZunoApp: React.FC = () => {
 
                     <button
                       onClick={() => {
-                        setChosenHelperName('Lakshmi');
+                        setChosenHelperName('Selected helper');
                         setCurrentScreen('checkout');
                       }}
                       className="w-full py-2.5 rounded-2xl bg-stone-100 hover:bg-stone-200 text-stone-800 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors"
@@ -916,7 +916,7 @@ export const ZunoApp: React.FC = () => {
               <div className="relative rounded-3xl overflow-hidden aspect-[16/11] bg-stone-200 shadow-md">
                 <img
                   src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=800&q=80"
-                  alt="Lakshmi"
+                  alt="Selected helper"
                   className="w-full h-full object-cover"
                   onError={(e) => {
                     (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=800&q=80';
@@ -926,11 +926,11 @@ export const ZunoApp: React.FC = () => {
                   <div className="w-6 h-6 rounded-full overflow-hidden">
                     <img
                       src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=100&q=80"
-                      alt="Lakshmi"
+                      alt="Selected helper"
                       className="w-full h-full object-cover"
                     />
                   </div>
-                  <span className="text-xs font-bold text-stone-900">Lakshmi</span>
+                  <span className="text-xs font-bold text-stone-900">Selected helper</span>
                   <span className="text-[11px] font-bold text-amber-500 flex items-center gap-0.5">
                     ★ 4.9
                   </span>
@@ -946,7 +946,7 @@ export const ZunoApp: React.FC = () => {
                 </div>
 
                 <div className="p-3 rounded-2xl bg-orange-50 border border-orange-200 shadow-xs text-center">
-                  <div className="text-[10px] text-stone-600 font-bold">Start OTP for Lakshmi</div>
+                  <div className="text-[10px] text-stone-600 font-bold">Start OTP for Selected helper</div>
                   <div className="font-mono font-black text-lg text-[#FF5A36] tracking-widest mt-0.5">
                     4821
                   </div>
@@ -964,7 +964,7 @@ export const ZunoApp: React.FC = () => {
                 </a>
 
                 <button
-                  onClick={() => alert('Opening live chat with Lakshmi...')}
+                  onClick={() => alert('Opening live chat with Selected helper...')}
                   className="p-3 rounded-2xl bg-white border border-stone-200 text-stone-800 flex flex-col items-center justify-center gap-1 text-xs font-bold hover:bg-stone-50 active:scale-95 transition-transform"
                 >
                   <MessageCircle className="w-4 h-4 text-stone-600" />
@@ -1019,7 +1019,7 @@ export const ZunoApp: React.FC = () => {
                   {t.visitCompleted}
                 </h2>
                 <p className="text-xs text-stone-500">
-                  Lakshmi finished all 5 tasks · 3 hours visit
+                  Selected helper finished all 5 tasks · 3 hours visit
                 </p>
               </div>
 
@@ -1062,7 +1062,7 @@ export const ZunoApp: React.FC = () => {
 
                 <button
                   onClick={() => {
-                    alert('Thank you for rating Lakshmi! Your feedback helps our community.');
+                    alert('Thank you for rating Selected helper! Your feedback helps our community.');
                   }}
                   className="w-full py-2.5 rounded-xl bg-[#2E1437] text-white font-bold text-xs"
                 >
@@ -1086,20 +1086,20 @@ export const ZunoApp: React.FC = () => {
               <div className="space-y-2 pt-1">
                 <button
                   onClick={() => {
-                    setIsLakshmiFavourited(true);
-                    alert('Lakshmi is now saved to My Helpers for fast 1-click booking!');
+                    setIsSelected helperFavourited(true);
+                    alert('Selected helper is now saved to My Helpers for fast 1-click booking!');
                   }}
                   className="w-full py-3 rounded-2xl bg-white border border-stone-200 hover:border-rose-300 text-stone-900 font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs"
                 >
                   <Heart className="w-4 h-4 fill-rose-500 text-rose-500" />
-                  <span>❤️ Add Lakshmi to My Helpers</span>
+                  <span>❤️ Add Selected helper to My Helpers</span>
                 </button>
 
                 <button
-                  onClick={() => handleBookAgain('Lakshmi')}
+                  onClick={() => handleBookAgain('Selected helper')}
                   className="w-full py-3.5 rounded-2xl bg-[#2E1437] text-white font-extrabold text-xs shadow-md"
                 >
-                  Book Again with Lakshmi
+                  Book Again with Selected helper
                 </button>
               </div>
             </div>
@@ -1120,7 +1120,7 @@ export const ZunoApp: React.FC = () => {
               <div className="space-y-2.5">
                 {[
                   {
-                    name: 'Lakshmi',
+                    name: 'Selected helper',
                     rating: 4.9,
                     jobs: 120,
                     skills: 'Cleaning · Cooking · Laundry',
@@ -1208,12 +1208,12 @@ export const ZunoApp: React.FC = () => {
                     <div className="w-10 h-10 rounded-full overflow-hidden ring-1 ring-stone-200 shrink-0">
                       <img
                         src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=200&q=80"
-                        alt="Lakshmi"
+                        alt="Selected helper"
                         className="w-full h-full object-cover"
                       />
                     </div>
                     <div>
-                      <div className="font-bold text-stone-900">Lakshmi</div>
+                      <div className="font-bold text-stone-900">Selected helper</div>
                       <div className="text-stone-500 text-[11px]">Sat, 26 Apr · 10 AM – 1 PM (3 hrs)</div>
                       <div className="text-stone-600 font-medium text-[11px]">Cleaning + Cooking (5 tasks)</div>
                     </div>

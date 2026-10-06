@@ -167,8 +167,9 @@ export const db = {
       supplyDemand: JSON.parse(JSON.stringify(INITIAL_LOCALITY_SUPPLY_DEMAND)),
       privacyConsents: JSON.parse(JSON.stringify(INITIAL_PRIVACY_CONSENTS)),
       privacyRequests: JSON.parse(JSON.stringify(INITIAL_PRIVACY_REQUESTS)),
-      activeCustomerId: '',
-      activeHelperId: '',
+      // Explicit demo reset is allowed to enter the demo identities.
+      activeCustomerId: 'cust_kartik',
+      activeHelperId: 'hlp_lakshmi',
     };
     saveState();
   },
